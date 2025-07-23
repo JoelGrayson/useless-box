@@ -1,21 +1,12 @@
-// Following the paper Lab 2B Updated Circuit
-// Separated the pins by 2 so that in case there is bridging it doesn't break things from shorting
+// Following the paper Final: Lab 2B Circuit with Battery Power
 
 // Outputs to control the motor through the inverter
 #define DRIVER_IN_1_PIN 2 //blue
 #define DRIVER_IN_2_PIN 4 //yellow
+    // Separated the pins by 2 so that in case there is bridging it doesn't break things from shorting
 
 // Inputs (pull-up)
-#define LIMITER_SWITCH_PIN 11 //yellow, SPST
-#define INPUT_SWITCH_PIN 13 //black, DPDT
-
-enum MotorState { //syntax help from C++
-    FORWARD,
-    REVERSE,
-    ASLEEP
-};
-
-MotorState motorState=ASLEEP;
+#define INPUT_SWITCH_PIN 12 //black, DPDT
 
 
 void setup() {
@@ -25,59 +16,40 @@ void setup() {
     pinMode(DRIVER_IN_1_PIN, OUTPUT);
     pinMode(DRIVER_IN_2_PIN, OUTPUT);
 
-    pinMode(LIMITER_SWITCH_PIN, INPUT); //ChatGPT told me there are no INPUT_PULLDOWN options so I added 10k resistors to manually pull these signals down
-    pinMode(INPUT_SWITCH_PIN, INPUT);
+    pinMode(INPUT_SWITCH_PIN, INPUT_PULLUP);
 }
 
 void loop() {
-    bool motorAtBase=digitalRead(LIMITER_SWITCH_PIN)==LOW; //when the switch is pressed, the motor is dormant and the switch is open, meaning `digitalRead` is LOW. When the motor is out and about, the NC means the switch is closed so `digitalRead ` is HIGH.
-    bool personPressedInput=digitalRead(INPUT_SWITCH_PIN)==HIGH; //whether the person pressed the switch and the robot hasn't had time to press it yet (toward the "B" side of the board)
-        //when the switch is moved toward the ink "B" on the board (person just pressed it), the motor should be moving toward it always since it needs to be turned off. Therefore, the motor should be FORWARD. In this case, IN1 should be HIGH and IN2 should be LOW
-        //when the switch is in the opposite side to "B" (has been pushed back by the motor), the input switch pin is open so the pull-down resistor means it reads LOW.
+    Serial.print(digitalRead(INPUT_SWITCH_PIN));
+    bool personPressedInput=digitalRead(INPUT_SWITCH_PIN)==LOW; //whether the person pressed the switch and the robot hasn't had time to press it yet (toward the "B" side of the board)
+        //when ==LOW, the switch is closed such that the pin is pulled down to GND. This is when the person pushed it forward
+        //when ==HIGH, the switch is open (default PULLUP means it is HIGH), so the switch has been hit and the robot can go in reverse back to its base
 
     // Debug information:
-    // Serial.print("Motor at base: ");
-    // Serial.print(motorAtBase);
-    // Serial.print(", person pressed input: ");
-    // Serial.print(personPressedInput);
-    // Serial.print(", motor state: ");
-    // Serial.println(motorState==FORWARD ? "forward" : motorState==REVERSE ? "reverse" : "asleep");
+    // Serial.print("Person pressed input: ");
+    // Serial.println(personPressedInput);
 
 
-    if (personPressedInput) {
+    if (personPressedInput) { //FORWARD, finite state machine state where the motor moves forward
         moveMotorForward();
-    } else {
-        if (motorAtBase) {
-            stopMotor();
-        } else {
-            if (motorState!=ASLEEP) { //if it is asleep and going into REVERSE this is because it was pushed up from the switch then don't go into REVERSE because otherwise there will be a loop
-                moveMotorInReverse();
-            }
-        }
+    } else { //REVERSE, finite state machine state where the motor moves backward to go back to its base. The power management system will automatically turn off the machine when it gets back to the base so no need for there to be a third state in the code
+        moveMotorInReverse();
     }
 }
 
 void moveMotorForward() {
-    if (motorState!=FORWARD) {
-        motorState=FORWARD;
-        digitalWrite(DRIVER_IN_1_PIN, LOW);
-        digitalWrite(DRIVER_IN_2_PIN, HIGH);
-    }
+    digitalWrite(DRIVER_IN_1_PIN, LOW);
+    digitalWrite(DRIVER_IN_2_PIN, HIGH);
 }
 
 void moveMotorInReverse() {
-    if (motorState!=REVERSE) {
-        motorState=REVERSE;
-        digitalWrite(DRIVER_IN_1_PIN, HIGH);
-        digitalWrite(DRIVER_IN_2_PIN, LOW);
-    }
+    digitalWrite(DRIVER_IN_1_PIN, HIGH);
+    digitalWrite(DRIVER_IN_2_PIN, LOW);
 }
 
+// No longer used since Arduino is turned off by power management system
 void stopMotor() {
-    if (motorState!=ASLEEP) {
-        motorState=ASLEEP;
-        digitalWrite(DRIVER_IN_1_PIN, LOW);
-        digitalWrite(DRIVER_IN_2_PIN, LOW);
-    }
+    digitalWrite(DRIVER_IN_1_PIN, LOW);
+    digitalWrite(DRIVER_IN_2_PIN, LOW);
 }
 
