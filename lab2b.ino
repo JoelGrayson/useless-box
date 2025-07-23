@@ -32,6 +32,6 @@ void loop() {
     Serial.print(", person pressed input: ");
     Serial.println(personPressedInput);
 
-    
+
 }
 

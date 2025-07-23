@@ -18,16 +18,16 @@ void loop() {
 
         if (user_input=='f') {
             Serial.println("Forward");
-            // digitalWrite(MOTOR_PIN_1, HIGH);
-            // digitalWrite(MOTOR_PIN_2, LOW);
+            digitalWrite(DRIVER_IN_1_PIN, LOW);
+            digitalWrite(DRIVER_IN_2_PIN, HIGH);
         } else if (user_input=='r') {
             Serial.println("Reverse");
-            // digitalWrite(MOTOR_PIN_1, LOW);
-            // digitalWrite(MOTOR_PIN_2, HIGH);
+            digitalWrite(DRIVER_IN_1_PIN, HIGH);
+            digitalWrite(DRIVER_IN_2_PIN, LOW);
         } else if (user_input=='s') {
             Serial.println("Stop");
-            // digitalWrite(MOTOR_PIN_1, LOW);
-            // digitalWrite(MOTOR_PIN_2, LOW);
+            digitalWrite(DRIVER_IN_1_PIN, LOW);
+            digitalWrite(DRIVER_IN_2_PIN, LOW);
         } else {
             Serial.println("Invalid character");
         }
