@@ -8,6 +8,7 @@
 // Inputs (pull-up)
 #define INPUT_SWITCH_PIN 12 //black, DPDT
 
+bool personPressedInput=false;
 
 void setup() {
     Serial.begin(9600);
@@ -20,21 +21,35 @@ void setup() {
 }
 
 void loop() {
-    Serial.print(digitalRead(INPUT_SWITCH_PIN));
-    bool personPressedInput=digitalRead(INPUT_SWITCH_PIN)==LOW; //whether the person pressed the switch and the robot hasn't had time to press it yet (toward the "B" side of the board)
-        //when ==LOW, the switch is closed such that the pin is pulled down to GND. This is when the person pushed it forward
-        //when ==HIGH, the switch is open (default PULLUP means it is HIGH), so the switch has been hit and the robot can go in reverse back to its base
+    updatePersonPressedInput();
 
     // Debug information:
-    // Serial.print("Person pressed input: ");
-    // Serial.println(personPressedInput);
+    Serial.print("Person pressed input: ");
+    Serial.println(personPressedInput);
 
 
     if (personPressedInput) { //FORWARD, finite state machine state where the motor moves forward
+        // 280 ms is needed to turn off the motor
         moveMotorForward();
+        delay(200);
+        moveMotorInReverse();
+        delay(100);
+        stopMotor();
+        delay(800); //wait in suspense
+        moveMotorForward();
+        while (personPressedInput) {
+            updatePersonPressedInput();
+            delay(10);
+        }
     } else { //REVERSE, finite state machine state where the motor moves backward to go back to its base. The power management system will automatically turn off the machine when it gets back to the base so no need for there to be a third state in the code
         moveMotorInReverse();
     }
+}
+
+void updatePersonPressedInput() {
+    personPressedInput=digitalRead(INPUT_SWITCH_PIN)==LOW; //whether the person pressed the switch and the robot hasn't had time to press it yet (toward the "B" side of the board)
+    //when ==LOW, the switch is closed such that the pin is pulled down to GND. This is when the person pushed it forward
+    //when ==HIGH, the switch is open (default PULLUP means it is HIGH), so the switch has been hit and the robot can go in reverse back to its base
 }
 
 void moveMotorForward() {
