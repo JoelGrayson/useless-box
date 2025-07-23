@@ -9,6 +9,14 @@
 #define LIMITER_SWITCH_PIN 11 //yellow, SPST
 #define INPUT_SWITCH_PIN 13 //black, DPDT
 
+enum MotorState { //syntax help from C++
+    FORWARD,
+    REVERSE,
+    ASLEEP
+};
+
+MotorState motorState=ASLEEP;
+
 
 void setup() {
     Serial.begin(9600);
@@ -27,11 +35,49 @@ void loop() {
         //when the switch is moved toward the ink "B" on the board (person just pressed it), the motor should be moving toward it always since it needs to be turned off. Therefore, the motor should be FORWARD. In this case, IN1 should be HIGH and IN2 should be LOW
         //when the switch is in the opposite side to "B" (has been pushed back by the motor), the input switch pin is open so the pull-down resistor means it reads LOW.
 
-    Serial.print("Motor at base: ");
-    Serial.print(motorAtBase);
-    Serial.print(", person pressed input: ");
-    Serial.println(personPressedInput);
+    // Debug information:
+    // Serial.print("Motor at base: ");
+    // Serial.print(motorAtBase);
+    // Serial.print(", person pressed input: ");
+    // Serial.print(personPressedInput);
+    // Serial.print(", motor state: ");
+    // Serial.println(motorState==FORWARD ? "forward" : motorState==REVERSE ? "reverse" : "asleep");
 
 
+    if (personPressedInput) {
+        moveMotorForward();
+    } else {
+        if (motorAtBase) {
+            stopMotor();
+        } else {
+            if (motorState!=ASLEEP) { //if it is asleep and going into REVERSE this is because it was pushed up from the switch then don't go into REVERSE because otherwise there will be a loop
+                moveMotorInReverse();
+            }
+        }
+    }
+}
+
+void moveMotorForward() {
+    if (motorState!=FORWARD) {
+        motorState=FORWARD;
+        digitalWrite(DRIVER_IN_1_PIN, LOW);
+        digitalWrite(DRIVER_IN_2_PIN, HIGH);
+    }
+}
+
+void moveMotorInReverse() {
+    if (motorState!=REVERSE) {
+        motorState=REVERSE;
+        digitalWrite(DRIVER_IN_1_PIN, HIGH);
+        digitalWrite(DRIVER_IN_2_PIN, LOW);
+    }
+}
+
+void stopMotor() {
+    if (motorState!=ASLEEP) {
+        motorState=ASLEEP;
+        digitalWrite(DRIVER_IN_1_PIN, LOW);
+        digitalWrite(DRIVER_IN_2_PIN, LOW);
+    }
 }
 
