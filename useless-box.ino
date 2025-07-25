@@ -49,7 +49,7 @@ void loop() {
         // hesitantAtLastMinute();
         // int actionNumber=actionNumberCounter;
         // actionNumberCounter=(actionNumberCounter+1)%4;
-        int actionNumber=random(5); //0–4
+        int actionNumber=random(10); //0–9 (some cases are more likely than others)
         Serial.print("Action number");
         Serial.println(actionNumber);
         switch (actionNumber) {
@@ -63,9 +63,16 @@ void loop() {
                 stopsMidway();
                 break;
             case 3:
+            case 4:
                 crazy();
                 break;
-            case 4:
+            case 5:
+            case 6:
+                crazy2();
+                break;
+            case 7:
+            case 8:
+            case 9:
             default:
                 normal();
                 break;
@@ -136,7 +143,7 @@ void hesitantAtLastMinute() {
 
 void stopsMidway() {
     moveMotorForward();
-    delay(150);
+    delay(140);
     stopMotor();
     delay(1000);
     moveForwardUntilDone();
@@ -146,12 +153,35 @@ void crazy() {
     moveMotorForward();
     delay(30);
 
-    for (int i=0; i<3; i++) {
+    for (int i=0; i<5; i++) {
         moveMotorForward();
         delay(100);
         moveMotorInReverse();
         delay(100);
     }
+    moveForwardUntilDone();
+}
+
+void crazy2() {
+    moveMotorForward();
+    delay(30);
+
+    for (int i=0; i<3; i++) {
+        for (int j=0; j<3; j++) {
+            moveMotorForward();
+            delay(100);
+            stopMotor();
+            delay(50);
+            moveMotorInReverse();
+            delay(100);
+            stopMotor();
+            delay(50);
+        }
+        stopMotor();
+        delay(200);
+    }
+    delay(400);
+
     moveForwardUntilDone();
 }
 
