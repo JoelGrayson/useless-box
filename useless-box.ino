@@ -8,6 +8,8 @@
 // Inputs (pull-up)
 #define INPUT_SWITCH_PIN 12 //black, DPDT
 
+#define NOISE_PIN A2 //for seeding
+
 bool personPressedInput=false;
 
 void setup() {
@@ -19,7 +21,18 @@ void setup() {
 
     pinMode(INPUT_SWITCH_PIN, INPUT_PULLUP);
 
-    randomSeed(analogRead(0)+micros()); //from documentation
+    // Make it very random (since only 1 number from the sequence is used since it is turned off after each turn)
+    unsigned long seed=analogRead(NOISE_PIN)+micros();
+    // Spend first 0.1 seconds making sure truly random
+    for (byte i=0; i<33; i++) { //from ChatGPT for more randomization
+        auto noise=analogRead(NOISE_PIN) << i;
+        // Serial.println(noise);
+        seed^=noise;
+        delay(3);
+    }
+    // Serial.print("Final seed: ");
+    // Serial.println(seed);
+    randomSeed(seed); //from documentation
 }
 
 int actionNumberCounter=0;
@@ -28,8 +41,8 @@ void loop() {
     updatePersonPressedInput();
 
     // Debug information:
-    Serial.print("Person pressed input: ");
-    Serial.println(personPressedInput);
+    // Serial.print("Person pressed input: ");
+    // Serial.println(personPressedInput);
 
 
     if (personPressedInput) { //FORWARD, finite state machine state where the motor moves forward
@@ -37,6 +50,8 @@ void loop() {
         // int actionNumber=actionNumberCounter;
         // actionNumberCounter=(actionNumberCounter+1)%4;
         int actionNumber=random(5); //0–4
+        Serial.print("Action number");
+        Serial.println(actionNumber);
         switch (actionNumber) {
             case 0:
                 indecisive();
@@ -96,7 +111,7 @@ void stopMotor() {
 // Turn OFF Switch Modes
 // 280 ms is needed to turn off the motor
 void normal() {
-    moveMotorForward();
+    moveForwardUntilDone();
 }
 
 void indecisive() {
@@ -128,6 +143,9 @@ void stopsMidway() {
 }
 
 void crazy() {
+    moveMotorForward();
+    delay(30);
+
     for (int i=0; i<3; i++) {
         moveMotorForward();
         delay(100);
